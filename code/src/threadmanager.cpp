@@ -4,7 +4,10 @@
 #include "threadmanager.h"
 #include "mythread.h"
 #include <pcosynchro/pcothread.h>
+#include <pcosynchro/pcomutex.h>
 #include<QDebug>
+#include <QMutex>
+#include <QWaitCondition>
 
 /*
  * std::pow pour les long long unsigned int
@@ -57,10 +60,10 @@ QString ThreadManager::startHacking(
         unsigned int nbThreads
 )
 {
-    unsigned int i;
+    //unsigned int i;
 
     long long unsigned int nbToCompute;
-    long long unsigned int nbComputed;
+    //long long unsigned int nbComputed;
 
     /*
      * Nombre de caractères différents pouvant composer le mot de passe
@@ -107,11 +110,32 @@ QString ThreadManager::startHacking(
     currentPasswordArray.fill(0,nbChars);
 
 
-    passwordCrack(hash,salt,charset,0,nbToCompute,this,currentPasswordArray,nbChars,&currentPasswordString);
+    std::vector<std::unique_ptr<PcoThread>> threadList;
 
-    if (currentPasswordString != ""){
-      return currentPasswordString;
+    long long unsigned int iterationsPerThread = nbToCompute/ nbThreads;
+
+    /* Crée les threads, on ajoutant leur pointeur à la liste.
+       Les threads sont immédiatement lancés par le constructeur. */
+    for (long long unsigned int i = 0; i < nbThreads; ++i) {
+            long long unsigned int nbComputedTread = i * iterationsPerThread;
+            long long unsigned int nbToComputeTread = (i == nbThreads - 1) ? nbToCompute : (i + 1) * iterationsPerThread;
+
+            /* Génère une combinaison correspondante sous forme de tableau d'indices*/
+            long long unsigned tmp = nbComputedTread;
+            for (long long unsigned i = 0; i < nbChars; ++i) {
+                int index = tmp % charset.length();
+                currentPasswordArray[i] = index;
+                tmp /= charset.length();
+            }
+
+        PcoThread *currentThread = new PcoThread(passwordCrack, hash,salt,charset,nbComputedTread,nbToComputeTread,this,currentPasswordArray,nbChars,&currentPasswordString);
+        threadList.push_back(std::unique_ptr<PcoThread>(currentThread));
     }
+
+    for (auto& t : threadList) {
+        t->join();
+    }
+
 
 
 
@@ -119,5 +143,5 @@ QString ThreadManager::startHacking(
      * Si on arrive ici, cela signifie que tous les mot de passe possibles ont
      * été testés, et qu'aucun n'est la préimage de ce hash.
      */
-    return QString("");
+    return currentPasswordString;
 }
