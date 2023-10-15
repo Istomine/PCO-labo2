@@ -41,16 +41,22 @@ void passwordCrack(
         /*
          * Si on a trouvé, on retourne le mot de passe courant (sans le sel)
          */
-        if (currentHash == hash || PcoThread::thisThread()->stopRequested()){
+        if (currentHash == hash){
+            *password = currentPasswordString;
 
-            if(!PcoThread::thisThread()->stopRequested()){
-                *password = currentPasswordString;
 
-                for(PcoThread* a : threads){
-                    a->requestStop();
+            for(auto t : threads){
+
+                if(t != PcoThread::thisThread()){
+                     t->requestStop();
                 }
+
             }
 
+
+            return;
+        }
+        if(PcoThread::thisThread()->stopRequested()){
             return;
         }
 

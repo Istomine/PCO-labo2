@@ -5,6 +5,7 @@
 #include <QString>
 #include <QVector>
 #include "threadmanager.h"
+#include <vector>
 
 void passwordCrack(
         const QString& hash,
