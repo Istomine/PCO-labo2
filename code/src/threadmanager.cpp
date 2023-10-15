@@ -4,7 +4,12 @@
 #include "threadmanager.h"
 #include "mythread.h"
 #include <pcosynchro/pcothread.h>
-#include<QDebug>
+#include <QDebug>
+#include <cmath>
+#include <vector>
+
+std::vector<PcoThread*> threads;
+
 
 /*
  * std::pow pour les long long unsigned int
@@ -57,10 +62,10 @@ QString ThreadManager::startHacking(
         unsigned int nbThreads
 )
 {
-    unsigned int i;
+    //unsigned int i;
 
     long long unsigned int nbToCompute;
-    long long unsigned int nbComputed;
+    //long long unsigned int nbComputed;
 
     /*
      * Nombre de caractères différents pouvant composer le mot de passe
@@ -70,13 +75,13 @@ QString ThreadManager::startHacking(
     /*
      * Mot de passe à tester courant
      */
-    QString currentPasswordString;
+    QString currentPasswordString = "";
 
     /*
      * Tableau contenant les index dans la chaine charset des caractères de
      * currentPasswordString
      */
-    QVector<unsigned int> currentPasswordArray;
+    //QVector<unsigned int> currentPasswordArray;
 
     /*
      * Hash du mot de passe à tester courant
@@ -103,21 +108,38 @@ QString ThreadManager::startHacking(
      * On initialise le premier mot de passe à tester courant en le remplissant
      * de nbChars fois du premier caractère de charset
      */
-    currentPasswordString.fill(charset.at(0),nbChars);
-    currentPasswordArray.fill(0,nbChars);
+    //currentPasswordString.fill(charset.at(0),nbChars);
+    //currentPasswordArray.fill(0,nbChars);
 
 
-    passwordCrack(hash,salt,charset,0,nbToCompute,this,currentPasswordArray,nbChars,&currentPasswordString);
+    QVector<QVector<unsigned int>> VecCurrentPasswordArray(nbThreads);
 
-    if (currentPasswordString != ""){
-      return currentPasswordString;
+    unsigned int interval = floor(charset.length() / nbThreads);
+    unsigned int startChar = 0;
+
+    for(auto it = VecCurrentPasswordArray.begin(); it != VecCurrentPasswordArray.end(); ++it , startChar += interval){
+        it->fill(0,nbChars);
+        it->back() = startChar;
     }
 
 
+    for(unsigned int i = 0 ; i < nbThreads; ++i){
+        threads.push_back(new PcoThread(passwordCrack,
+                                        hash,
+                                        salt,
+                                        charset,
+                                        nbToCompute,
+                                        this,
+                                        VecCurrentPasswordArray[i],
+                                        nbChars,
+                                        threads,
+                                        &currentPasswordString));
+    }
 
-    /*
-     * Si on arrive ici, cela signifie que tous les mot de passe possibles ont
-     * été testés, et qu'aucun n'est la préimage de ce hash.
-     */
-    return QString("");
+    for (auto& t : threads) {
+        t->join();
+        delete t;
+    }
+
+    return currentPasswordString;
 }

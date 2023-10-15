@@ -2,16 +2,19 @@
 #include "threadmanager.h"
 #include <QString>
 #include <QCryptographicHash>
+#include <vector>
+
+using namespace std;
 
 void passwordCrack(
         const QString& hash,
         const QString& salt,
         const QString& charset,
-        long long unsigned nbComputed,
         long long unsigned nbToCompute,
         ThreadManager* thisThread,
         QVector<unsigned int> currentPasswordArray,
         unsigned int nbChars,
+        const vector<PcoThread*>& threads,
         QString* password
         ){
 
@@ -19,9 +22,10 @@ void passwordCrack(
     QString currentHash;
     unsigned int i;
     unsigned int nbValidChars = charset.length();
+    long long unsigned nbComputed = 0;
+    QString currentPasswordString;
 
     // Compute from currentPasswordArray one time to initialize
-    QString currentPasswordString;
     for (i=0;i<nbChars;i++)
         currentPasswordString[i]  = charset.at(currentPasswordArray.at(i));
 
@@ -37,8 +41,16 @@ void passwordCrack(
         /*
          * Si on a trouvé, on retourne le mot de passe courant (sans le sel)
          */
-        if (currentHash == hash){
-            *password = currentPasswordString;
+        if (currentHash == hash || PcoThread::thisThread()->stopRequested()){
+
+            if(!PcoThread::thisThread()->stopRequested()){
+                *password = currentPasswordString;
+
+                for(PcoThread* a : threads){
+                    a->requestStop();
+                }
+            }
+
             return;
         }
 
