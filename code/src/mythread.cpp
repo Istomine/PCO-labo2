@@ -2,7 +2,6 @@
 #include "threadmanager.h"
 #include <QString>
 #include <QCryptographicHash>
-#include <vector>
 
 using namespace std;
 
@@ -14,7 +13,7 @@ void passwordCrack(
         ThreadManager* thisThread,
         QVector<unsigned int> currentPasswordArray,
         unsigned int nbChars,
-        const vector<PcoThread*>& threads,
+        QVector<PcoThread*>& threads,
         QString* password
         ){
 
@@ -25,11 +24,16 @@ void passwordCrack(
     long long unsigned nbComputed = 0;
     QString currentPasswordString;
 
-    // Compute from currentPasswordArray one time to initialize
+    // Convertis le mot de passe en String avant de commencer la recherche
     for (i=0;i<nbChars;i++)
         currentPasswordString[i]  = charset.at(currentPasswordArray.at(i));
 
     while (nbComputed < nbToCompute) {
+
+        if(PcoThread::thisThread()->stopRequested()){
+            return;
+        }
+
         /* On vide les données déjà ajoutées au générateur */
         md5.reset();
         /* On préfixe le mot de passe avec le sel */
@@ -44,21 +48,14 @@ void passwordCrack(
         if (currentHash == hash){
             *password = currentPasswordString;
 
-
-            for(auto t : threads){
-
-                if(t != PcoThread::thisThread()){
-                     t->requestStop();
-                }
-
+            // On demande l'arret aux threads. Sauf au thread qui à trouvé le mdp
+            for(auto& t : threads){
+                if(t != PcoThread::thisThread()){ t->requestStop(); }
             }
 
+            return;
+        }
 
-            return;
-        }
-        if(PcoThread::thisThread()->stopRequested()){
-            return;
-        }
 
 
         /*

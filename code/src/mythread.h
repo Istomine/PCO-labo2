@@ -5,7 +5,7 @@
 #include <QString>
 #include <QVector>
 #include "threadmanager.h"
-#include <vector>
+
 
 void passwordCrack(
         const QString& hash,
@@ -15,7 +15,7 @@ void passwordCrack(
         ThreadManager* thisThread,
         QVector<unsigned int> currentPasswordArray,
         unsigned int nbChars,
-        const std::vector<PcoThread*>& threads,
+        QVector<PcoThread*>& threads,
         QString* password
         );
 

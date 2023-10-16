@@ -6,9 +6,8 @@
 #include <pcosynchro/pcothread.h>
 #include <QDebug>
 #include <cmath>
-#include <vector>
 
-std::vector<PcoThread*> threads;
+QVector<PcoThread*> threads;
 
 
 /*
@@ -62,61 +61,27 @@ QString ThreadManager::startHacking(
         unsigned int nbThreads
 )
 {
-    //unsigned int i;
-
-    long long unsigned int nbToCompute;
-    //long long unsigned int nbComputed;
-
-    /*
-     * Nombre de caractères différents pouvant composer le mot de passe
-     */
-    //unsigned int nbValidChars;
 
     /*
      * Mot de passe à tester courant
      */
     QString currentPasswordString = "";
 
-    /*
-     * Tableau contenant les index dans la chaine charset des caractères de
-     * currentPasswordString
-     */
-    //QVector<unsigned int> currentPasswordArray;
+    long long unsigned int nbToCompute = intPow(charset.length(),nbChars);
 
     /*
-     * Hash du mot de passe à tester courant
+     * Vecteur contenant les differents mot de passe pour chaque thread
      */
-    //QString currentHash;
-
-    /*
-     * Object QCryptographicHash servant à générer des md5
-     */
-    //QCryptographicHash md5(QCryptographicHash::Md5);
-
-    /*
-     * Calcul du nombre de hash à générer
-     */
-    nbToCompute        = intPow(charset.length(),nbChars);
-    //nbComputed         = 0;
-
-    /*
-     * Nombre de caractères différents pouvant composer le mot de passe
-     */
-   // nbValidChars       = charset.length();
-
-    /*
-     * On initialise le premier mot de passe à tester courant en le remplissant
-     * de nbChars fois du premier caractère de charset
-     */
-    //currentPasswordString.fill(charset.at(0),nbChars);
-    //currentPasswordArray.fill(0,nbChars);
-
-
     QVector<QVector<unsigned int>> VecCurrentPasswordArray(nbThreads);
 
+    // Calcule à quel caractère doit commencer chaque thread
     unsigned int interval = floor(charset.length() / nbThreads);
     unsigned int startChar = 0;
 
+    /*
+     * Boucle remplissant chaque vecteur de mot de passe.
+     * Le dernier caractere est celui qui determine à partir d'ou le thread commence à chercher
+     */
     for(auto it = VecCurrentPasswordArray.begin(); it != VecCurrentPasswordArray.end(); ++it , startChar += interval){
         it->fill(0,nbChars);
         it->back() = startChar;
@@ -132,7 +97,7 @@ QString ThreadManager::startHacking(
                                         this,
                                         VecCurrentPasswordArray[i],
                                         nbChars,
-                                        threads,
+                                        std::ref(threads),
                                         &currentPasswordString));
     }
 
