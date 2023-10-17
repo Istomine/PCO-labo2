@@ -34,6 +34,8 @@ void passwordCrack(
         /* On calcul le hash */
         currentHash = md5.result().toHex();
 
+        if (!PcoThread::thisThread()->stopRequested()){return;}
+
         /*
          * Si on a trouvé, on retourne le mot de passe courant (sans le sel)
          */
@@ -41,6 +43,7 @@ void passwordCrack(
             *password = currentPasswordString;
             return;
         }
+
 
 
         /*

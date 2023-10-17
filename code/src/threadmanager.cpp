@@ -133,6 +133,9 @@ QString ThreadManager::startHacking(
     }
 
     for (auto& t : threadList) {
+        if(!currentPasswordString.isEmpty()){
+           for (auto& thread : threadList) { thread->requestStop();}
+        }
         t->join();
     }
 
