@@ -1,3 +1,17 @@
+/*
+ ------------------------------------------------------------------------------
+ Nom du fichier : mythread.cpp
+ Auteur(s)      : Alexandre Shyshmarov Theo Pilet
+ Date creation  : 17.10.2023
+
+ Description    : Contient la fonction de cassage de mot de passe md5.
+                  La fonction a été adapté pour marché de manière
+                  concurente.
+
+ Remarque(s)    :
+ ------------------------------------------------------------------------------
+*/
+
 #include "mythread.h"
 #include "threadmanager.h"
 #include <QString>
@@ -5,16 +19,14 @@
 
 using namespace std;
 
-
 void passwordCrack(
         const QString& hash,
         const QString& salt,
         const QString& charset,
         long long unsigned nbToCompute,
-        ThreadManager* thisThread,
+        ThreadManager* threadManager,
         QVector<unsigned int> currentPasswordArray,
         unsigned int nbChars,
-        QVector<PcoThread*>& threads,
         QString* password
         ){
 
@@ -31,6 +43,7 @@ void passwordCrack(
         currentPasswordString[i]  = charset.at(currentPasswordArray.at(i));
 
     while (nbComputed < nbToCompute) {
+
 
         if(PcoThread::thisThread()->stopRequested()){
             return;
@@ -50,7 +63,8 @@ void passwordCrack(
         if (currentHash == hash){
             *password = currentPasswordString;
 
-            // On demande l'arret aux threads. Sauf au thread qui à trouvé le mdp
+            // On demande l'arret aux threads.
+            // Sauf au thread qui à trouvé le mdp
             for(auto& t : threads){
                 if(t != PcoThread::thisThread()){ t->requestStop(); }
             }
@@ -65,7 +79,7 @@ void passwordCrack(
          * de l'état de notre avancement (pour la barre de progression)
          */
         if ((nbComputed % 1000) == 0) {
-            thisThread->incrementPercentComputed((double)1000/nbToCompute);
+            threadManager->incrementPercentComputed((double)1000/nbToCompute);
         }
 
         /*

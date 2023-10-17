@@ -8,13 +8,25 @@
   Ce fichier contient la définition de la classe ThreadManager, qui permet de
   reverser un hash md5 par brute force.
 */
+/*
+ ------------------------------------------------------------------------------
+ Nom du fichier : threadmanager.h
+ Auteur(s)      : Alexandre Shyshmarov Theo Pilet
+ Date creation  : 17.10.2023
+ ------------------------------------------------------------------------------
+*/
 
 #ifndef THREADMANAGER_H
 #define THREADMANAGER_H
 
 #include <QObject>
 #include <QString>
+#include <pcosynchro/pcothread.h>
+#include <QVector>
 
+
+// Permet démarrer des threads et de les gérer
+extern QVector<PcoThread*> threads;
 
 /**
  * \brief The ThreadManager class

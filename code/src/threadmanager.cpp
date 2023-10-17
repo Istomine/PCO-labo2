@@ -1,6 +1,18 @@
+/*
+ ------------------------------------------------------------------------------
+ Nom du fichier : threadmanager.cpp
+ Auteur(s)      : Alexandre Shyshmarov Theo Pilet
+ Date creation  : 17.10.2023
+
+ Description    : Fichier permettant de preparer les données et de lancer les
+                  threads afin de trouver le mot de passe qui correspond au
+                  hash donné.
+
+ Remarque(s)    :
+ ------------------------------------------------------------------------------
+*/
 #include <QCryptographicHash>
 #include <QVector>
-
 #include "threadmanager.h"
 #include "mythread.h"
 #include <pcosynchro/pcothread.h>
@@ -10,8 +22,12 @@
 
 using namespace std;
 
+/*
+ * Accéder par passwordCrack dans mythread.cpp
+ * En lecture et écriture
+ * Pas de mechanisme de protection
+ */
 QVector<PcoThread*> threads;
-
 
 /*
  * std::pow pour les long long unsigned int
@@ -66,27 +82,16 @@ QString ThreadManager::startHacking(
 {
 
     /*
-     * Mot de passe à tester courant
+     * Mot de passe trouvé
      */
-    QString currentPasswordString = "";
+    QString password = "";
 
     long long unsigned int nbToCompute = intPow(charset.length(),nbChars);
 
     /*
-    long long unsigned int nbDePassage = nbToCompute / nbThreads;
-
-    VecNbToCompute.push_back( nbToCompute - accumulate(VecNbToCompute.begin(),VecNbToCompute.end(),0));
-*/
-     QVector<long long unsigned> VecNbToCompute;
-
-     for(int i = 0 ; i < nbThreads-1; ++i){
-         VecNbToCompute.push_back(intPow(charset.length(),nbChars-1));
-     }
-
-    /*
      * Vecteur contenant les differents mot de passe pour chaque thread
      */
-    QVector<QVector<unsigned int>> VecCurrentPasswordArray(nbThreads);
+    QVector<QVector<unsigned int>> vecCurrentPasswordArray(nbThreads);
 
     // Calcule à quel caractère doit commencer chaque thread
     unsigned int interval = floor(charset.length() / nbThreads);
@@ -94,9 +99,12 @@ QString ThreadManager::startHacking(
 
     /*
      * Boucle remplissant chaque vecteur de mot de passe.
-     * Le dernier caractere est celui qui determine à partir d'ou le thread commence à chercher
+     * Le dernier caractere est celui qui determine à partir d'ou
+     * le thread commence à chercher
      */
-    for(auto it = VecCurrentPasswordArray.begin(); it != VecCurrentPasswordArray.end(); ++it , startChar += interval){
+    for(auto it = vecCurrentPasswordArray.begin();
+        it != vecCurrentPasswordArray.end(); ++it , startChar += interval){
+
         it->fill(0,nbChars);
         it->back() = startChar;
     }
@@ -108,10 +116,9 @@ QString ThreadManager::startHacking(
                                         charset,
                                         nbToCompute,
                                         this,
-                                        VecCurrentPasswordArray[i],
+                                        vecCurrentPasswordArray[i],
                                         nbChars,
-                                        std::ref(threads),
-                                        &currentPasswordString));
+                                        &password));
     }
 
     for (auto& t : threads) {
@@ -120,5 +127,5 @@ QString ThreadManager::startHacking(
     }
     threads.clear();
 
-    return currentPasswordString;
+    return password;
 }
