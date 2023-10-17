@@ -6,6 +6,9 @@
 #include <pcosynchro/pcothread.h>
 #include <QDebug>
 #include <cmath>
+#include <numeric>
+
+using namespace std;
 
 QVector<PcoThread*> threads;
 
@@ -70,6 +73,17 @@ QString ThreadManager::startHacking(
     long long unsigned int nbToCompute = intPow(charset.length(),nbChars);
 
     /*
+    long long unsigned int nbDePassage = nbToCompute / nbThreads;
+
+    VecNbToCompute.push_back( nbToCompute - accumulate(VecNbToCompute.begin(),VecNbToCompute.end(),0));
+*/
+     QVector<long long unsigned> VecNbToCompute;
+
+     for(int i = 0 ; i < nbThreads-1; ++i){
+         VecNbToCompute.push_back(intPow(charset.length(),nbChars-1));
+     }
+
+    /*
      * Vecteur contenant les differents mot de passe pour chaque thread
      */
     QVector<QVector<unsigned int>> VecCurrentPasswordArray(nbThreads);
@@ -87,13 +101,12 @@ QString ThreadManager::startHacking(
         it->back() = startChar;
     }
 
-
     for(unsigned int i = 0 ; i < nbThreads; ++i){
         threads.push_back(new PcoThread(passwordCrack,
                                         hash,
                                         salt,
                                         charset,
-                                        nbToCompute,
+                                        VecNbToCompute[i],
                                         this,
                                         VecCurrentPasswordArray[i],
                                         nbChars,
@@ -105,6 +118,7 @@ QString ThreadManager::startHacking(
         t->join();
         delete t;
     }
+    threads.clear();
 
     return currentPasswordString;
 }

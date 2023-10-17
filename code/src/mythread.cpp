@@ -5,6 +5,7 @@
 
 using namespace std;
 
+
 void passwordCrack(
         const QString& hash,
         const QString& salt,
@@ -20,8 +21,9 @@ void passwordCrack(
     QCryptographicHash md5(QCryptographicHash::Md5);
     QString currentHash;
     unsigned int i;
-    unsigned int nbValidChars = charset.length();
     long long unsigned nbComputed = 0;
+    unsigned int nbValidChars = charset.length();
+
     QString currentPasswordString;
 
     // Convertis le mot de passe en String avant de commencer la recherche
