@@ -106,7 +106,7 @@ QString ThreadManager::startHacking(
                                         hash,
                                         salt,
                                         charset,
-                                        VecNbToCompute[i],
+                                        nbToCompute,
                                         this,
                                         VecCurrentPasswordArray[i],
                                         nbChars,
